@@ -94,3 +94,33 @@ def funcSoccer():
 
 funcSoccer()
 print(f'이름은 {name} 수준은 {player}')
+
+print()
+a = 10; b = 20; c = 30
+def Foo():
+    a = 7           # 지역변수 
+    b = 100
+    def Bar():
+        global c    # Bar 함수의 멤버가 아니라 모듈(파일)의 멤버가 됨. 전역 변수
+        nonlocal b
+        b = 8       # 지역 변수
+        print(f"Bar 수행 수 a:{a}, b:{b}, c:{c}")
+        c = 9
+        b = 200 # Foo의 멤버가 됨
+    Bar()
+    print(f"Foo 수행 수 a:{a}, b:{b}, c:{c}")
+
+Foo()
+print(f"함수 수행 수 a:{a}, b:{b}, c:{c}")
+
+print()
+g = 1
+print('g = ', g)
+def func():
+    global g
+    a = g
+    g = 2
+    return a
+
+print(func())
+print('g = ', g)
