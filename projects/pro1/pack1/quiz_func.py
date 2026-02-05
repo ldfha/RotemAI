@@ -14,40 +14,43 @@
 # #         elif stop == 'y' or stop == 'Y':
 # #             continue
 
-# def inputfunc():
-#     datas = [
-#         [1, "강나루", 1500000, 2010],
-#         [2, "이바다", 2200000, 2018],
-#         [3, "박하늘", 3200000, 2005],
-#     ]
-#     return datas
+def inputfunc():
+    datas = [
+        [1, "강나루", 1500000, 2010],
+        [2, "이바다", 2200000, 2018],
+        [3, "박하늘", 3200000, 2005],
+    ]
+    return datas
 
-# def processFunc(datas):
-#     count = 0
-#     print('사번\t이름\t기본급\t근무년수\t근속수당\t공제액\t수령액')
-#     print('-------------------------------------------------------------------------------')
-#     for data in datas:
-#         count += 1
-#         years = 2026 - data[3]    # 근무 년수
-#         plus = 150000       # 근속 수당
-#         if 4 <= years <= 8:
-#             plus = 450000
-#         elif years >= 9:
-#             plus = 1000000
-#         money = data[2] + plus     # 급여액
+import datetime
 
-#         tax = 0.15         # 공제 세율
-#         if money >= 3000000:
-#             tax = 0.5
-#         elif money >= 2000000:
-#             tax = 0.3
+def processFunc(datas):
+    CURRENT_YEAR = datetime.date.today().year
+    count = 0
+    print('사번\t이름\t기본급\t근무년수\t근속수당\t공제액\t수령액')
+    print('-------------------------------------------------------------------------------')
+    for data in datas:
+        count += 1
+        years = CURRENT_YEAR - data[3]    # 근무 년수
+        plus = 150000       # 근속 수당
+        if 4 <= years <= 8:
+            plus = 450000
+        elif years >= 9:
+            plus = 1000000
+        money = data[2] + plus     # 급여액
+
+        tax = 0.15         # 공제 세율
+        if money >= 3000000:
+            tax = 0.5
+        elif money >= 2000000:
+            tax = 0.3
         
-#         gongje = money * tax
-#         wage = money - gongje
+        gongje = money * tax
+        wage = money - gongje
 
-#         print(f'{data[0]}\t{data[1]}\t{data[2]}\t{years}\t{plus}\t{gongje}\t{wage}')
-#     print(f'처리 건수 : {count}')
-# processFunc(inputfunc())
+        print(f'{data[0]}\t{data[1]}\t{data[2]}\t{years}\t{plus}\t{gongje}\t{wage}')
+    print(f'처리 건수 : {count}')
+processFunc(inputfunc())
 
 
 # #연습문제 ) 키보드를 통해 상품자료를 입력받아 가공 후 출력하기
