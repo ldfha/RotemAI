@@ -85,3 +85,229 @@ insert into gogek values(12,'이소리','02-296-1066','810609-2046777',9);
 insert into gogek values(13,'배용중','02-691-7692','820920-1052777',1);
 insert into gogek values(14,'김현주','031-167-1884','800128-2062777',11);
 insert into gogek values(15,'송운하','02-887-9344','830301-2013777',2);
+
+-- select : db 서버로부터 클라이언트로 자료를 읽는 명령
+-- select 칼럼명 as 별명,...from 테이블명 where 조건 order by 기준키, ...
+SELECT * FROM jikwon; 	-- 모든 칼럼 읽기
+SELECT jikwonno, jikwonname FROM jikwon;
+SELECT jikwonno, jikwongen, busernum, jikwonname FROM jikwon;	-- 순서는 선택 가능
+SELECT jikwonno AS 직원번호, jikwonname AS 직원명 FROM jikwon;
+SELECT 10, '안녕', 12 / 3 AS 결과 FROM DUAL;
+SELECT jikwonname, jikwonpay, jikwonpay * 0.05 AS tax FROM jikwon;
+SELECT jikwonname, CONCAT(jikwonname, '님') AS jikwonetc FROM jikwon;
+
+-- 정렬(sort)
+SELECT * FROM jikwon ORDER BY jikwonpay ASC;	-- 오름차순
+SELECT * FROM jikwon ORDER BY jikwonpay DESC;	-- 내림차순
+SELECT * FROM jikwon ORDER BY jikwonjik;
+SELECT * FROM jikwon ORDER BY jikwonjik ASC, busernum DESC, jikwongen ASC, jikwonpay;
+SELECT jikwonname, jikwonpay, jikwonpay / 100 * 100 AS pay FROM jikwon ORDER BY pay DESC;
+
+-- 중복 배제
+SELECT distinct jikwonjik FROM jikwon;
+SELECT DISTINCT jikwonjik, jikwonname  FROM jikwon; -- X 중복 배제시엔 해당 칼럼 하나만 적어야함
+
+-- 연산자 : () > 산술(* / > + -) > 관계(비교) > is null, like, in > between, not > and > or
+
+SELECT * FROM jikwon WHERE jikwonjik='대리';
+SELECT * FROM jikwon WHERE jikwonno=3;
+SELECT * FROM jikwon WHERE jikwonibsail='2010-03-03';
+SELECT * FROM jikwon WHERE jikwonno=5 OR jikwonno=7;
+SELECT * FROM jikwon WHERE jikwonjik='사원'AND jikwongen='여' AND jikwonpay <= 3000;
+SELECT * FROM jikwon WHERE jikwonjik='사원'AND (jikwongen='여' OR jikwonibsail >= '2017-01-01');
+
+SELECT * FROM jikwon WHERE jikwonno >= 5 AND jikwonno <= 10;
+SELECT * FROM jikwon WHERE jikwonno BETWEEN 5 AND 10;
+SELECT * FROM jikwon WHERE jikwonibsail BETWEEN '2017-01-01' AND '2019-12-31';
+
+SELECT * FROM jikwon WHERE jikwonno < 5 OR jikwonno > 20;
+SELECT * FROM jikwon WHERE jikwonno NOT BETWEEN 5 AND 20;
+
+SELECT * FROM jikwon WHERE jikwonpay > 5000;
+SELECT * FROM jikwon WHERE jikwonpay > 2000 + 3000;
+
+SELECT * FROM jikwon WHERE jikwonname = '홍길동';
+SELECT * FROM jikwon WHERE jikwonname >= '박';
+SELECT ASCII('a'), ASCII('A'), ASCII('가'), ASCII('나') FROM DUAL;
+SELECT * FROM jikwon WHERE jikwonname BETWEEN '김' AND '이';
+
+-- in 멤버 조건 연산
+SELECT * FROM jikwon WHERE jikwonjik='대리' OR jikwonjik='과장' OR jikwonjik='부장';
+SELECT * FROM jikwon WHERE jikwonjik IN('대리', '과장', '부장');
+SELECT * FROM jikwon WHERE jikwonno IN(3, 12, 29);
+
+-- like 조건 연산 : %(0개 이상의 문자열), _(한개 문자)
+SELECT * FROM jikwon WHERE jikwonname LIKE '이%';
+SELECT * FROM jikwon WHERE jikwonname LIKE '이순%';
+SELECT * FROM jikwon WHERE jikwonname LIKE '%라';
+SELECT * FROM jikwon WHERE jikwonname LIKE '이%라';
+
+SELECT * FROM jikwon WHERE jikwonname LIKE '이__';
+SELECT * FROM jikwon WHERE jikwonname LIKE '이_라';
+
+SELECT * FROM jikwon WHERE jikwonname LIKE '__';
+
+SELECT * FROM jikwon WHERE jikwonpay LIKE '3___';
+
+SELECT * FROM gogek WHERE gogekjumin LIKE '_______1%';
+SELECT * FROM gogek WHERE gogekjumin LIKE '%-1%';
+
+-- is null
+UPDATE jikwon SET jikwonjik=NULL WHERE jikwonno=5;
+SELECT * FROM jikwon;
+SELECT * FROM jikwon WHERE jikwonjik=NULL; 	-- X
+SELECT * FROM jikwon WHERE jikwonjik IS NULL;
+
+-- limit
+SELECT * FROM jikwon LIMIT 3;
+SELECT * FROM jikwon ORDER BY jikwonno DESC LIMIT 3;
+SELECT * FROM jikwon LIMIT 5, 3;		-- (시작행, 갯수)
+
+SELECT jikwonno AS 직원번호, jikwonname AS 직원명, jikwonjik AS 직급, 
+	jikwonpay AS 연봉, jikwonpay / 12 AS 보너스, jikwonibsail AS 입사일 FROM jikwon 
+	WHERE jikwonjik IN ('과장', '부장', '사원')
+	AND jikwonpay >= 4000 AND jikwonibsail BETWEEN '2015-1-1' AND '2019-12-31'
+	ORDER BY jikwonjik, jikwonpay DESC LIMIT 3;
+	
+-- 내장함수 : 데이터 조작의 효율성 증진이 목적
+-- 단일 행 함수 : 각 행에 대해 작업한다. 행 단위 처리
+-- 문자 함수
+SELECT LOWER('Hello'), UPPER('Hello') FROM DUAL;
+SELECT SUBSTR('hello world', 3), SUBSTR('hello world', 3, 3), SUBSTR('hello world', -3, 3) FROM DUAL;
+SELECT LENGTH('hello world'), INSTR('hello world', 'e') FROM DUAL;
+SELECT REPLACE('010.111.1234', '.', '-') FROM DUAL;
+-- ...
+
+-- jikwon 테이블에서 이름에 '이'가 포함된 직원이 있으면 '이'부터 두글자 출력하기
+SELECT jikwonname, SUBSTR(jikwonname, INSTR(jikwonname, '이'), 2) FROM jikwon WHERE jikwonname LIKE('%이%');
+
+-- 숫자 함수
+SELECT ROUND(45.678, 2), ROUND(45.678), ROUND(45.678, 0), ROUND(45.678, -1) FROM DUAL;
+SELECT jikwonname, jikwonpay, jikwonpay * 0.25 AS tax, ROUND(jikwonpay * 0.25, 0) FROM jikwon; 
+
+SELECT TRUNCATE(45.678, 0), TRUNCATE(45.678, 1), TRUNCATE(45.678, -1) FROM DUAL;
+SELECT MOD(15, 2), 15 / 2 FROM DUAL;
+SELECT GREATEST(23, 25, 5, 1, 12), LEAST(23, 25, 5, 1, 12) FROM DUAL;
+
+-- 날짜 함수
+SELECT NOW(), NOW() + 2, SYSDATE(), CURDATE() FROM DUAL;
+SELECT NOW(), SLEEP(3), NOW();				-- 하나의 query 내에서는 동일 값
+SELECT SYSDATE(), SLEEP(3), SYSDATE();		-- 실행 시점값 출력
+
+SELECT ADDDATE('2020-08-01', 3), ADDDATE('2020-08-01', -3), SUBDATE('2020-08-01', 3);
+SELECT DATE_ADD(NOW(), INTERVAL 1 MINUTE),
+DATE_ADD(NOW(),INTERVAL 5 DAY),
+DATE_ADD(NOW(),INTERVAL 5 MONTH) FROM DUAL;
+
+SELECT DATEDIFF(NOW(), '2025-5-5');
+
+-- 형변환 함수
+SELECT DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%Y년%m월%d일');
+SELECT jikwonname, jikwonibsail, DATE_FORMAT(jikwonibsail, '%W') FROM jikwon WHERE busernum=10;
+
+SELECT STR_TO_DATE('2026-02-12', '%Y-%m-%d');
+SELECT STR_TO_DATE('2026-02-12 13:16:34', '%Y-%m-%d %H:%i:%S');
+
+-- 기타 함수
+-- rank() : 순위 결정
+SELECT jikwonno, jikwonname, jikwonpay,
+RANK() OVER (ORDER BY jikwonpay) AS result,
+DENSE_RANK() OVER (ORDER BY jikwonpay) AS result2
+ FROM jikwon;
+
+-- nvl(value1, value2) : value1이 null이면 value2를 취함
+SELECT jikwonname, jikwonjik, nvl(jikwonjik, '임시직') FROM jikwon;
+
+-- nvl2(value1, value2, value3) : value1이 null이 아니면 value2, null이면 value3 취함
+SELECT jikwonname, jikwonjik, nvl2(jikwonjik, '정규직', '임시직') FROM jikwon;
+
+-- nullif(value1, value2) : 두 개의 값이 일치하면 null, 아니면 value1 취함
+SELECT jikwonname, jikwonjik, NULLIF(jikwonjik, '대리') FROM jikwon;
+
+-- 조건 표현식
+-- 형식1) CASE 표현식 WHEN 비교값1 THEN 결과값1 WHEN 비교값2 THEN 결과값2 … [ELSE 결과값n] END AS 별명
+SELECT  case 10 / 5 when 5 then '안녕' when 2 then '반가워' ELSE '잘가' END AS 결과 FROM DUAL;
+SELECT jikwonname, jikwonpay, jikwonjik,
+case jikwonjik
+when '이사' then jikwonpay * 0.05
+when '부장' then jikwonpay * 0.04
+when '과장' then jikwonpay * 0.03
+else jikwonpay * 0.02
+END donation FROM jikwon;
+
+-- 형식2) 
+-- case when 조건1 then 결과값1 when 조건2 then 결과값2 ... [else 결과값 n] END AS 별명
+SELECT jikwonname, 
+case when jikwongen='남' then '남성' 
+when jikwongen='여' then '여성' 
+END AS gender FROM jikwon;
+
+SELECT jikwonname, jikwonpay,
+case when jikwonpay >= 7000 then '우수연봉'
+when jikwonpay >= 5000 then '보통연봉'
+ELSE '저조' 
+END AS result FROM jikwon WHERE jikwonjik IN ('대리', '과장');
+
+-- if(조건) 참값, 거짓값 as 별명
+SELECT jikwonname, jikwonpay, jikwonjik, 
+TRUNCATE(jikwonpay/1000, 0)
+FROM jikwon;
+SELECT jikwonname, jikwonpay, jikwonjik, 
+if(TRUNCATE(jikwonpay/1000, 0) >= 5, 'good', 'normal') AS result 
+FROM jikwon;
+
+
+SELECT * FROM jikwon;
+-- 문제 1. 10년 이상 근무하면 '감사합니다', 그 외는 '열심히' 라고 표현 ( 2010 년 이후 직원만 참여 )
+-- 특별수당(pay를 기준) : 10년 이상 5%, 나머지 3% (정수로 표시:반올림)
+
+SELECT jikwonname AS 직원명, 
+YEAR(NOW())-YEAR(jikwonibsail) AS 근무년수,
+if(YEAR(NOW())-YEAR(jikwonibsail) >= 10, '감사합니다', '열심히') AS 표현,
+if(YEAR(NOW())-YEAR(jikwonibsail) >= 10, ROUND(jikwonpay*0.05), ROUND(jikwonpay*0.03)) AS 특별수당
+FROM jikwon WHERE jikwonibsail >= '2010-01-01';
+
+-- 문제 2. 입사 후 8년 이상이면 왕고참, 5년 이상이면 고참, 3년 이상이면 보통, 나머지는 일반으로 표현
+SELECT jikwonname AS 직원명, jikwonjik AS 직급,
+DATE_FORMAT(jikwonibsail, '%Y.%m.%d') AS 입사년월일,
+case
+	when YEAR(NOW())-YEAR(jikwonibsail) >= 8 then '왕고참'
+	when YEAR(NOW())-YEAR(jikwonibsail) >= 5 then '고참'
+	when YEAR(NOW())-YEAR(jikwonibsail) >= 3 then '보통'
+	ELSE '일반' END AS 구분,
+case
+	when busernum = 10 then '총무부'
+	when busernum = 20 then '영업부'
+	when busernum = 30 then '전산부'
+	when busernum = 40 then '관리부'
+	END AS 부서
+FROM jikwon;
+
+-- 문제3. 각 부서번호별로 실적에 따라 급여를 다르게 인상하려 한다. 
+SELECT jikwonno AS 사번, jikwonname AS 직원명, busernum AS 부서, jikwonpay AS 연봉,
+case
+	when busernum = 10 then round(jikwonpay*1.1)
+	when busernum = 30 then round(jikwonpay*1.2)
+	ELSE jikwonpay
+	END AS 인상연봉,
+if(YEAR(NOW())-YEAR(jikwonibsail) >= 8, 'O', 'X')AS 장기근속
+FROM jikwon;
+
+
+-- 집계 함수(복수행 함수) : 전체 자료를 그룹별로 구분해 통계 결과를 얻기 위한 함수 
+SELECT SUM(jikwonpay) AS 평균 FROM jikwon ;
+SELECT MAX(jikwonpay) AS 최댓값, MIN(jikwonpay) AS 최솟값 FROM jikwon;
+
+UPDATE jikwon SET jikwonpay=NULL WHERE jikwonno=5;
+SELECT * FROM jikwon;
+
+SELECT AVG(jikwonpay), AVG(nvl(jikwonpay ,0)) FROM jikwon;
+SELECT SUM(jikwonpay) / 29, SUM(jikwonpay) / 30 FROM jikwon;
+
+SELECT COUNT(jikwonno), COUNT(jikwonpay) FROM jikwon;
+SELECT COUNT(*) AS 인원수 FROM jikwon;
+
+SELECT STDDEV(jikwonpay) AS 표준편차, VAR_SAMP(jikwonpay) AS 분산 FROM jikwon;
+
+SELECT COUNT(*) AS 인원, VAR_SAMP(jikwonpay) AS 분산 FROM jikwon WHERE busernum = 10;
+SELECT COUNT(*) AS 인원, VAR_SAMP(jikwonpay) AS 분산 FROM jikwon WHERE busernum = 20;
