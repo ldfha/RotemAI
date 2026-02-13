@@ -487,18 +487,240 @@ SELECT * FROM jikwon;
 SELECT * FROM buser;
 -- 문제
 -- 문1) 직급이 '사원' 인 직원이 관리하는 고객자료 출력
-SELECT gogekname, jikwonname 
+SELECT jikwonno AS 사번, jikwonname AS 직원명, jikwonjik AS 직급, gogekname AS 고객명, gogektel AS 고객전화,
+if(gogekjumin LIKE '%-1%', '남', '여') AS 고객성별
+FROM gogek INNER JOIN jikwon ON gogekdamsano = jikwonno
+WHERE jikwonjik='사원';
+
+SELECT jikwonno AS 사번, jikwonname AS 직원명, jikwonjik AS 직급, gogekname AS 고객명, gogektel AS 고객전화,
+CASE
+	when SUBSTR(gogekjumin,8,1) IN('1','3') then '남'
+	when SUBSTR(gogekjumin,8,1) IN('2','4') then '여' 
+END AS 고객성별
 FROM gogek INNER JOIN jikwon ON gogekdamsano = jikwonno
 WHERE jikwonjik='사원';
 
 -- 문2) 직원별 고객 확보 수  -- GROUP BY 사용
-SELECT jikwonname, COUNT(gogekname)
+SELECT jikwonno as 사번, jikwonname AS 직원명, COUNT(gogekname) AS 고객수
 FROM jikwon LEFT OUTER JOIN gogek ON gogekdamsano=jikwonno
-GROUP BY jikwonname;
+GROUP BY jikwonno;
 
 -- 문3) 고객이 담당직원의 자료를 보고 싶을 때 
 -- 즉, 고객명을 입력하면,  담당직원 자료 출력  
-
+SELECT jikwonname AS 직원명, jikwonjik AS 직급 
+FROM jikwon INNER JOIN gogek ON gogekdamsano=jikwonno 
+WHERE gogekname='강나루';
 
 -- 문4) 직원명을 입력하면 관리고객 자료 출력
+SELECT gogekname AS 고객명, gogektel AS 고객전화, gogekjumin AS 주민번호,
+YEAR(NOW())-CONCAT('19', SUBSTR(gogekjumin, 1, 2)) +1 AS 나이
+FROM gogek INNER JOIN jikwon ON gogekdamsano=jikwonno
+WHERE jikwonname='이순신';
 
+SELECT gogekname AS 고객명, gogektel AS 고객전화, gogekjumin AS 주민번호,
+timestampdiff(YEAR, date_format(SUBSTR(gogekjumin, 1, 6), '%y%m%d'), NOW()) AS 나이
+FROM gogek INNER JOIN jikwon ON gogekdamsano=jikwonno
+WHERE jikwonname='이순신';
+
+-- 세 개의 테이블 join
+-- 고객과 부서는 조인 불가 (공통 칼럼 없음)
+SELECT jikwonname, busername, gogkename FROM jikwon, buser, gogek
+WHERE busernum=buserno AND jikwonno=gogekdamsano;
+
+SELECT jikwonname, busername, gogekname
+FROM jikwon INNER JOIN buser ON buserno=busernum
+INNER JOIN gogek ON gogekdamsano=jikwonno;
+
+-- join 연습 2
+-- 문1) 총무부에서 관리하는 고객수 출력 (고객 30살 이상만 작업에 참여)
+SELECT busername, COUNT(gogekname)
+FROM jikwon INNER JOIN buser ON buserno=busernum
+INNER JOIN gogek ON gogekdamsano=jikwonno
+WHERE busername='총무부' 
+AND timestampdiff(YEAR, date_format(SUBSTR(gogekjumin, 1, 6), '%y%m%d'), NOW()) >= 30
+GROUP BY busername;
+ 
+
+-- 문2) 부서명별 고객 인원수 (부서가 없으면 "무소속")
+SELECT nvl(busername, '무소속'), COUNT(gogekname)
+FROM jikwon left OUTER JOIN buser ON buserno=busernum
+INNER JOIN gogek ON gogekdamsano=jikwonno
+GROUP BY buserno;
+
+-- 문3) 고객이 담당직원의 자료를 보고 싶을 때 즉, 고객명을 입력하면  담당직원 자료 출력  
+SELECT jikwonname AS 직원명, jikwonjik AS 직급, busername AS 부서명, busertel AS 부서전화, jikwongen AS 성별
+FROM jikwon INNER JOIN buser ON buserno=busernum
+INNER JOIN gogek ON gogekdamsano=jikwonno
+WHERE gogekname='강나루';
+
+-- 문4) 부서와 직원명을 입력하면 관리고객 자료 출력
+SELECT gogekname AS 고객명, gogektel AS 고객전화, if(gogekjumin LIKE '______-1%', '남', '여') AS 성별
+FROM jikwon INNER JOIN buser ON buserno=busernum
+INNER JOIN gogek ON gogekdamsano=jikwonno
+WHERE busername='영업부' AND jikwonname='이순신';
+
+
+-- union
+-- 테이블 2개 만들기
+CREATE TABLE pum1(bun INT, pummok VARCHAR(20));
+INSERT INTO pum1 VALUES(1,'귤'); 
+INSERT INTO pum1 VALUES(2,'한라봉');
+INSERT INTO pum1 VALUES(3,'바나나'); 
+SELECT * FROM pum1; 
+
+CREATE TABLE pum2(mum INT, sangpum VARCHAR(20));
+INSERT INTO pum2 VALUES(10,'토마토'); 
+INSERT INTO pum2 VALUES(20,'딸기');
+INSERT INTO pum2 VALUES(30,'참외'); 
+INSERT INTO pum2 VALUES(40,'수박'); 
+SELECT * FROM pum2; 
+
+-- union: 구조가 일치하는 두개 이상의 테이블 자료 합쳐 출력, 원래의 테이블 계속 유지
+SELECT bun AS 번호, pummok AS 품명 FROM pum1 
+UNION SELECT mum,sangpum FROM pum2;
+
+
+-- subquery : 쿼리 내에 있는 쿼리가 있는 형태(주로 안쪽 결과를 바깥쪽에서 참조)
+-- 다른 테이블의 결과를 조건으로 쓰고 싶을 때
+-- 계산된 값을 이용하고 싶을 때
+-- 복잡한 조건을 단계적으로 나눠 처리하고 싶을 때
+
+-- where 안에 있는 subquery
+-- 예1) '이미라' 직원과 직급이 같은 직원 출력
+SELECT jikwonjik FROM jikwon WHERE jikwonname='이미라';	-- 대리
+SELECT * FROM jikwon WHERE jikwonjik='대리';
+
+-- 두번 처리하지 말고 한번에
+SELECT * FROM jikwon WHERE jikwonjik=(SELECT jikwonjik FROM jikwon WHERE jikwonname='이미라')
+
+-- 예2) 직급이 대리 중에서 가장 먼저 입사한 직원 출력
+-- 답은 같지만 오답
+SELECT * FROM jikwon WHERE jikwonibsail=(SELECT MIN(jikwonibsail) FROM jikwon WHERE jikwonjik='대리');
+-- 정답
+SELECT * FROM jikwon WHERE jikwonjik='대리' AND jikwonibsail=(SELECT MIN(jikwonibsail) FROM jikwon WHERE jikwonjik='대리');
+
+-- 예3) 인천에서 근무하는 직원 출력
+SELECT * FROM jikwon
+WHERE busernum=(SELECT buserno FROM buser WHERE buserloc='인천');
+
+-- 예4) 인천 이외에 근무하는 직원 출력
+-- err : subquery return 값이 1개 이상
+SELECT * FROM jikwon
+WHERE busernum=(SELECT buserno FROM buser WHERE NOT buserloc='인천');
+
+-- sol1) IN
+SELECT * FROM jikwon
+WHERE busernum IN (SELECT buserno FROM buser WHERE NOT buserloc='인천');
+-- sol2) 받은 결과를 부정
+SELECT * FROM jikwon
+WHERE busernum <>(SELECT buserno FROM buser WHERE buserloc='인천');
+
+-- 예5) 고객 중 차일호와 나이가 같은 자료 출력
+SELECT * FROM gogek
+WHERE SUBSTR(gogekjumin, 1, 2)=
+(SELECT SUBSTR(gogekjumin, 1, 2) FROM gogek WHERE gogekname='차일호');
+
+
+-- subquery 연습 문제
+-- 문1) 2010년 이후에 입사한 남자 중 급여를 가장 많이 받는 직원은?
+SELECT * FROM jikwon
+WHERE jikwonpay=(
+	SELECT MAX(jikwonpay) 
+	FROM jikwon 
+	WHERE jikwonibsail > '2010-01-01');
+ 
+
+-- 문2)  평균급여보다 급여를 많이 받는 직원은?
+SELECT * FROM jikwon
+WHERE jikwonpay > (
+	SELECT avg(jikwonpay)
+	FROM jikwon
+);
+ 
+
+-- 문3) '이미라' 직원의 입사 이후에 입사한 직원은?
+SELECT * FROM jikwon
+WHERE jikwonibsail > (
+	SELECT jikwonibsail
+	FROM jikwon
+	WHERE jikwonname='이미라'
+);
+ 
+
+-- 문4) 2010 ~ 2015년 사이에 입사한 총무부(10),영업부(20),전산부(30) 직원 중 급여가 가장 적은 사람은?
+-- (직급이 NULL인 자료는 작업에서 제외)
+SELECT * FROM jikwon
+WHERE jikwonpay=(
+	SELECT MIN(jikwonpay)
+	FROM jikwon
+	WHERE busernum=10 OR busernum=20 OR busernum=30
+);
+ 
+
+-- 문5) 한송이, 이순신과 직급이 같은 사람은 누구인가?
+SELECT * FROM jikwon
+WHERE jikwonjik IN (
+	SELECT jikwonjik
+	FROM jikwon
+	WHERE jikwonname='한송이' OR jikwonname='이순신'
+);
+ 
+
+-- 문6) 과장 중에서 최대급여, 최소급여를 받는 사람은?
+SELECT * FROM jikwon
+WHERE jikwonjik='과장' 
+AND (
+	jikwonpay=(SELECT MAX(jikwonpay) FROM jikwon WHERE jikwonjik='과장')
+	OR
+	jikwonpay=(SELECT MIN(jikwonpay) FROM jikwon WHERE jikwonjik='과장')
+); 
+
+-- 문7) 10번 부서의 최소급여보다 많은 사람은?
+SELECT * FROM jikwon
+WHERE jikwonpay > (
+	SELECT MIN(jikwonpay)
+	FROM jikwon
+	WHERE busernum=10
+);
+
+-- 문8) 30번 부서의 평균급여보다 급여가 많은 '대리' 는 몇명인가?
+SELECT COUNT(*) FROM jikwon
+WHERE jikwonjik='대리'AND jikwonpay > (
+	SELECT avg(jikwonpay) 
+	FROM jikwon
+	WHERE busernum=30
+);
+ 
+
+-- 문9) 고객을 확보하고 있는 직원들의 이름, 직급, 부서명을 입사일 별로 출력하라.
+SELECT jikwonname AS 이름, jikwonjik AS 직급, busername AS 부서명
+FROM jikwon INNER JOIN buser ON buserno=busernum
+WHERE jikwonno IN (
+	SELECT gogekdamsano
+	FROM gogek)
+ORDER BY jikwonibsail;
+ 
+SELECT DISTINCT jikwonname AS 이름, jikwonjik AS 직급, busername AS 부서명
+FROM jikwon INNER JOIN buser ON buserno=busernum
+INNER JOIN gogek ON gogekdamsano=jikwonno
+ORDER BY jikwonibsail;
+
+-- 문10) 이순신과 같은 부서에 근무하는 직원과 해당 직원이 관리하는 고객 출력
+SELECT * 
+FROM gogek 
+WHERE gogekdamsano IN (
+	SELECT jikwonno
+	FROM jikwon
+	WHERE busernum=(
+		SELECT busernum
+		FROM jikwon
+		WHERE jikwonname='이순신')
+);
+
+SELECT * 
+FROM gogek INNER JOIN jikwon ON gogekdamsano=jikwonno
+WHERE busernum = (
+	SELECT buserno 
+	FROM buser INNER JOIN jikwon ON busernum=buserno
+	WHERE jikwonname='이순신'
+);
