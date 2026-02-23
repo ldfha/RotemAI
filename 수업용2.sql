@@ -624,11 +624,17 @@ WHERE SUBSTR(gogekjumin, 1, 2)=
 -- subquery 연습 문제
 -- 문1) 2010년 이후에 입사한 남자 중 급여를 가장 많이 받는 직원은?
 SELECT * FROM jikwon
-WHERE jikwonpay=(
+WHERE jikwongen='남' AND jikwonpay=(
 	SELECT MAX(jikwonpay) 
 	FROM jikwon 
-	WHERE jikwonibsail > '2010-01-01');
- 
+	WHERE jikwongen='남' AND jikwonibsail > '2010-01-01');
+	
+-- 정답
+SELECT * FROM jikwon
+WHERE jikwonibsail >= '2010-01-01' AND jikwongen='남' AND jikwonpay=(
+	SELECT MAX(jikwonpay) 
+	FROM jikwon 
+	WHERE jikwongen='남' AND jikwonibsail >= '2010-01-01');
 
 -- 문2)  평균급여보다 급여를 많이 받는 직원은?
 SELECT * FROM jikwon
@@ -640,7 +646,7 @@ WHERE jikwonpay > (
 
 -- 문3) '이미라' 직원의 입사 이후에 입사한 직원은?
 SELECT * FROM jikwon
-WHERE jikwonibsail > (
+WHERE jikwonibsail >= (
 	SELECT jikwonibsail
 	FROM jikwon
 	WHERE jikwonname='이미라'
@@ -650,10 +656,13 @@ WHERE jikwonibsail > (
 -- 문4) 2010 ~ 2015년 사이에 입사한 총무부(10),영업부(20),전산부(30) 직원 중 급여가 가장 적은 사람은?
 -- (직급이 NULL인 자료는 작업에서 제외)
 SELECT * FROM jikwon
-WHERE jikwonpay=(
-	SELECT MIN(jikwonpay)
-	FROM jikwon
-	WHERE busernum=10 OR busernum=20 OR busernum=30
+WHERE jikwonibsail BETWEEN '2010-01-01' 
+	AND '2015-12-31' AND jikwonjik IS NOT NULL AND busernum IN (10, 20, 30) 
+	AND jikwonpay=(
+		SELECT MIN(jikwonpay)
+		FROM jikwon
+		WHERE jikwonibsail BETWEEN '2010-01-01' AND '2015-12-31' 
+		AND busernum IN (10, 20, 30)
 );
  
 
@@ -664,7 +673,13 @@ WHERE jikwonjik IN (
 	FROM jikwon
 	WHERE jikwonname='한송이' OR jikwonname='이순신'
 );
- 
+
+SELECT * FROM jikwon
+WHERE jikwonjik IN (
+	SELECT jikwonjik
+	FROM jikwon
+	WHERE jikwonname IN ('한송이','이순신')
+);
 
 -- 문6) 과장 중에서 최대급여, 최소급여를 받는 사람은?
 SELECT * FROM jikwon
@@ -674,6 +689,12 @@ AND (
 	OR
 	jikwonpay=(SELECT MIN(jikwonpay) FROM jikwon WHERE jikwonjik='과장')
 ); 
+
+SELECT * FROM jikwon
+WHERE jikwonjik='과장' 
+AND (jikwonpay IN ((SELECT MAX(jikwonpay) FROM jikwon WHERE jikwonjik='과장'),
+(SELECT MIN(jikwonpay) FROM jikwon WHERE jikwonjik='과장'))
+);
 
 -- 문7) 10번 부서의 최소급여보다 많은 사람은?
 SELECT * FROM jikwon
@@ -705,7 +726,15 @@ FROM jikwon INNER JOIN buser ON buserno=busernum
 INNER JOIN gogek ON gogekdamsano=jikwonno
 ORDER BY jikwonibsail;
 
+SELECT jikwonname AS 이름, jikwonjik AS 직급, busername AS 부서명
+FROM jikwon LEFT OUTER JOIN buser ON buserno=busernum
+WHERE jikwonno IN (
+	SELECT DISTINCT gogekdamsano
+	FROM gogek)
+ORDER BY jikwonibsail;
+
 -- 문10) 이순신과 같은 부서에 근무하는 직원과 해당 직원이 관리하는 고객 출력
+-- (고객은 나이가 30 이하면 '청년', 50 이하면 '중년', 그 외는 '노년'으로 표시하고, 고객 연장자 부터 출력)
 SELECT * 
 FROM gogek 
 WHERE gogekdamsano IN (
@@ -724,3 +753,297 @@ WHERE busernum = (
 	FROM buser INNER JOIN jikwon ON busernum=buserno
 	WHERE jikwonname='이순신'
 );
+
+SELECT jikwonname AS 직원명, busername AS 부서명, busertel AS 부서전화, jikwonjik AS 직급, gogekname AS 고객명, gogektel AS 고객전화, 
+case 
+	when (2026- (1900 + SUBSTR(gogekjumin, 1, 2))) <= 30 then '청년' 
+	when (2026- (1900 + SUBSTR(gogekjumin, 1, 2))) <= 50 then '중년' 
+	when (2026- (1900 + SUBSTR(gogekjumin, 1, 2))) > 50 then '노년' 
+	ELSE '없음' 
+END AS '고객구분' 
+FROM jikwon INNER JOIN buser ON busernum = buserno 
+INNER JOIN gogek ON jikwonno = gogekdamsano 
+WHERE busernum = (SELECT busernum FROM jikwon WHERE jikwonname = '이순신') 
+ORDER BY (2026- (1900 + SUBSTR(gogekjumin, 1, 2))) DESC;
+
+-- 쿼리문은 동일한 결과를 여러 방법으로 수행 가능
+-- 총무부에 근무하는 직원들이 관리하는 고객 출력
+-- subquery 이용
+SELECT gogekno, gogekname, gogektel FROM gogek
+WHERE gogekdamsano IN (
+	SELECT jikwonno 
+	FROM jikwon 
+	WHERE busernum=(
+		SELECT buserno 
+		FROM buser 
+		WHERE busername='총무부'));
+		
+-- join 사용
+SELECT gogekno, gogekname, gogektel FROM gogek
+INNER JOIN jikwon ON jikwon.jikwonno=gogek.gogekdamsano
+INNER JOIN buser ON jikwon.busernum=buser.buserno
+WHERE busername='총무부';
+
+-- and, all 연산자 : null 인 자료는 제외하고 작업한다.
+-- < any : subquery의 반환값 중 최대값보다 작은 ~ 	<= 도 가능
+-- > any : subquery의 반환값 중 최소값보다 큰 ~ 	>= 도 가능
+-- < all : subquery의 반환값 중 최소값보다 작은 ~ 
+-- > all : subquery의 반환값 중 최대값보다 큰 ~ 	
+
+-- '대리'의 최대값보다 작은 연봉을 받는 직원은?
+SELECT jikwonno, jikwonname, jikwonpay FROM jikwon
+WHERE jikwonpay < ANY (SELECT jikwonpay FROM jikwon WHERE jikwonjik='대리');
+
+-- 30번 부서의 최고 연봉자 보다 연봉을 많이 받는 직원은?
+SELECT jikwonno, jikwonname, jikwonpay FROM jikwon
+WHERE jikwonpay > ALL (SELECT jikwonpay FROM jikwon WHERE busernum=30);
+
+-- 30번 부서의 최저 연봉자 보다 연봉을 많이 받는 직원은?
+SELECT jikwonno, jikwonname, jikwonpay FROM jikwon
+WHERE jikwonpay > ANY (SELECT jikwonpay FROM jikwon WHERE busernum=30);
+
+-- exists 연산자
+-- 직원이 있는 부서 출력
+SELECT busername, buserloc FROM buser bu
+WHERE EXISTS(SELECT 'imsi' FROM jikwon WHERE jikwon.busernum=bu.buserno); -- true 반환
+
+-- 직원이 없는 부서 출력
+SELECT busername, buserloc FROM buser bu
+WHERE NOT EXISTS(SELECT 'imsi' FROM jikwon WHERE jikwon.busernum=bu.buserno);	-- false 반환
+
+-- from 절에 사용하는 subquery
+-- 전체 평균 연봉과 최대 연봉 사이의 연봉을 받는 직원 출력
+SELECT jikwonno, jikwonname, jikwonpay 
+FROM jikwon a, (SELECT AVG(jikwonpay) avgs, MAX(jikwonpay) maxs FROM jikwon) b
+WHERE a.jikwonpay BETWEEN b.avgs AND b.maxs;
+
+-- group by의 having 절에 포함된 subquery
+-- 부서별 평균 연봉 중 30번 부서의 평균 연봉보다 큰 자료(부서) 출력
+SELECT busernum, AVG(jikwonpay) FROM jikwon
+GROUP BY busernum 
+HAVING AVG(jikwonpay) > (SELECT AVG(jikwonpay) FROM jikwon WHERE busernum=30);
+
+-- 상관 subquery : outer query의 각 행을 inner query에서 참조하여 수행하는 서브 쿼리
+-- 안쪽 질의에서 바깥쪽 질의를 참조하고, 다시 안쪽의 결과를 바깥쪽 질의에서 참조하는 형태
+-- 각 부서의 최대 연봉자는?
+SELECT * FROM jikwon a
+WHERE a.jikwonpay=(SELECT MAX(b.jikwonpay) FROM jikwon b WHERE a.busernum=b.busernum);
+
+-- 연봉 순위 3위 이내의 직원 출력(descending)
+SELECT a.jikwonno, a.jikwonname, a.jikwonpay FROM jikwon a
+WHERE 3 > (SELECT COUNT(*) FROM jikwon b WHERE b.jikwonpay > a.jikwonpay)
+AND jikwonpay IS NOT NULL ORDER BY jikwonpay DESC;
+
+-- subquery를 이용한 table 생성 및 insert 수행
+CREATE TABLE jiktab1 AS SELECT * FROM jikwon;	-- jikwon과 동일 테이블 생성, pk는 제외
+DESC jiktab1;
+SELECT * FROM jiktab1;
+
+CREATE TABLE jiktab2 AS SELECT * FROM jikwon WHERE 1=0;	-- jikwon과 동일 구조의 테이블 생성
+DESC jiktab2;
+SELECT * FROM jiktab2;
+
+-- insert + subquery
+INSERT INTO jiktab2 SELECT * FROM jikwon WHERE jikwonjik='과장';
+INSERT INTO jiktab2(jikwonno, jikwonname, busernum) SELECT jikwonno, jikwonname, busernum FROM jikwon WHERE jikwonjik='대리';
+
+-- update + subquery
+SELECT * FROM jiktab1;
+UPDATE jiktab1 SET jikwonjik=(SELECT jikwonjik FROM jikwon WHERE jikwonname='이순신')
+WHERE jikwonno=2;
+SELECT * FROM jiktab1;
+
+-- delete + subquery
+DELETE FROM jiktab1 WHERE jikwonno IN (SELECT DISTINCT gogekdamsano FROM gogek);
+SELECT * FROM jiktab1;
+
+-- 트랜잭션 : DB의 상태를 변경시키는 논리적인 작업 단위
+-- 트랜잭션의 4가지 특징 : ACID
+-- insert, update, delete 시 트랜잭션 시작됨
+-- commit, rollback으로 트랜잭션 종료함
+-- 서버종료, 타임아웃 등이 발생해도 트랜잭션 종료함
+
+SHOW VARIABLES LIKE 'autocommit%';		-- autocommit 설정 확인
+SET autocommit = TRUE	-- autocommit 설정
+SET autocommit = FALSE	-- autocommit 해제
+-- autocommit 해제 이후 마지막에는 반드시 설정으로 바꿔놔야 한다. 그렇지 않으면 데드락
+
+-- 트랜잭션 연습
+CREATE TABLE jiktab3 AS SELECT * FROM jikwon;	-- 연습용 테이블
+
+
+-- 연습1
+SET autocommit = FALSE;
+DELETE FROM jiktab3 WHERE jikwonno=2;	-- 트랜잭션 시작
+SELECT * FROM jiktab3;
+-- ROLLBACK;	-- 트랜잭션 종료
+COMMIT;
+SELECT * FROM jiktab3;
+SET autocommit = TRUE;
+
+-- 연습2 : savepoint(저장점)를 이용해 부분적인 트랜잭션 처리 가능
+SET autocommit = FALSE;
+SELECT * FROM jiktab3 WHERE jikwonno=4;
+UPDATE jiktab3 SET jikwonpay=7777 WHERE jikwonno=4;	-- 트랜잭션 시작
+SAVEPOINT a;
+UPDATE jiktab3 SET jikwonpay=8888 WHERE jikwonno=5;
+SELECT * FROM jiktab3 WHERE jikwonno=4 or jikwonno=5;
+ROLLBACK TO SAVEPOINT a;	-- 부분 작업 취소 : 트랜잭션 종료 X
+SELECT * FROM jiktab3 WHERE jikwonno=4 or jikwonno=5;
+ROLLBACK;	-- 전체 작업 취소 : 트랜잭션 종료
+SELECT * FROM jiktab3 WHERE jikwonno=4 or jikwonno=5;
+
+UPDATE jiktab3 SET jikwonpay=9999 WHERE jikwonno=5;	-- 트랜잭션 시작
+COMMIT;	-- 트랜잭션 종료
+SET autocommit = TRUE;
+SHOW VARIABLES LIKE 'autocommit%';
+
+-- 교착상태(Deadlock) : 두 개 이상의 트랜젝션이 서로 상대방이 가진 락(lock)을 기다리면서 영원히 진행하지 못하는 상태
+-- 해결책은 트랜잭션을 수행완료 또는 취소하는 것
+-- 일관성 유지가 둥요
+SET autocommit = FALSE;
+SELECT * FROM jiktab3 WHERE jikwonno=7;
+UPDATE jiktab3 SET jikwonpay=1234 WHERE jikwonno=7;	-- 트랜잭션 시작
+SELECT * FROM jiktab3 WHERE jikwonno=7;
+COMMIT;
+
+
+-- view 파일 
+-- 물리적인 테이블을 근거로 select문(조건 포함)을 파일로 저장하여, 가상의 테이블로 사용한다.
+-- 물리적인 테이블이 아니므로 메모리 소모가 거의 없다.
+-- 복잡하고 긴 쿼리문을 단순화 가능, 보안 강화, 자료의 독립성 확보
+-- 형식 : create or replace view 뷰파일명 as select문
+--			 alter view 뷰파일명 ...
+--			 drop view 뷰파일명 
+
+SELECT jikwonno, jikwonname, jikwonpay FROM jikwon WHERE jikwonibsail < '2010-12-31';
+
+CREATE OR REPLACE VIEW v_a AS
+SELECT jikwonno, jikwonname, jikwonpay FROM jikwon WHERE jikwonibsail < '2010-12-31';
+SHOW TABLES;
+SELECT * FROM v_a;
+DESC v_a;
+
+SHOW FULL TABLES IN test WHERE table_type LIKE 'VIEW';	-- view file 목록 확인
+SELECT SUM(jikwonpay) AS 연봉합 FROM v_a;
+
+CREATE VIEW v_b AS SELECT * FROM jikwon 
+WHERE jikwonname LIKE '김%' OR jikwonname LIKE '이%'  OR jikwonname LIKE '박%';
+SELECT * FROM v_b;
+
+ALTER TABLE jikwon RENAME kbs;
+SELECT * FROM v_b;	-- err
+ALTER TABLE kbs RENAME jikwon;
+SELECT * FROM v_b;	-- success
+
+CREATE VIEW v_c AS SELECT * FROM jikwon ORDER BY jikwonpay DESC;
+SELECT * FROM v_c;
+
+CREATE VIEW v_d AS SELECT jikwonno, jikwonname, jikwonpay*10000 AS ypay FROM jikwon;
+SELECT * FROM v_d;
+
+CREATE VIEW v_e AS SELECT jikwonname, ypay FROM v_d WHERE ypay >= 50000000;
+SELECT * FROM v_e;
+
+UPDATE v_e SET jikwonname='김치국' WHERE jikwonname='김부만';
+SELECT * FROM jikwon;
+
+DELETE FROM v_d WHERE jikwonname='최미숙';
+SELECT * FROM v_d;
+SELECT * FROM jikwon;
+
+DELETE FROM v_d WHERE ypay=41000000;	-- 계산에 의한 열도 조건에 참여 가능
+SELECT * FROM v_d;
+SELECT * FROM jikwon;
+
+SELECT * FROM v_d;
+UPDATE v_d SET ypay=1111 WHERE jikwonname='홍길동';	-- err
+
+CREATE OR REPLACE view v_e AS SELECT jikwonno, jikwonname, busernum, jikwonpay FROM jikwon;
+SELECT * FROM v_e;
+INSERT INTO v_e VALUES(31, '김밥', 20, 5000);	-- view의 insert는 원본 not null에 주의
+SELECT * FROM v_e;
+SELECT * FROM jikwon;
+
+CREATE OR REPLACE view v_f 
+AS SELECT jikwonno, jikwonname, busernum, jikwonpay, jikwonibsail FROM jikwon
+WHERE jikwonibsail < '2015-1-1';
+
+SELECT * FROM v_f;
+INSERT INTO v_f VALUES(32, '공기밥', 10, 6000, '2014-5-6');
+INSERT INTO v_f VALUES(33, '주먹밥', 10, 7000, '2025-5-6');
+SELECT * FROM v_f;
+SELECT * FROM jikwon;
+
+CREATE VIEW v_group AS
+SELECT jikwonjik, SUM(jikwonpay) AS hap, AVG(jikwonpay) AS ave
+FROM jikwon GROUP BY jikwonjik;
+
+SELECT * FROM v_group;	-- group by에 의한 view는 참조만 가능(insert, update, delete 불가)
+
+CREATE OR REPLACE VIEW v_join AS
+SELECT jikwonno, jikwonname, busername, jikwonjik 
+FROM jikwon INNER JOIN buser ON jikwon.busernum=buser.buserno
+WHERE jikwon.busernum IN (10, 20);
+
+SELECT * FROM v_join;
+
+UPDATE v_join SET jikwonname='손오공' WHERE jikwonname='박명화';
+SELECT * FROM v_join;
+UPDATE v_join SET jikwonname='사오정', busername='영업부' WHERE jikwonname='손오공';	-- err
+-- join에 의한 view는 한 개의 테이블만 수정에 참여해야 함
+
+delete FROM v_join WHERE jikwonname='손오공';	-- err. 삭제 불가. Oracle에서는 삭제 가능
+
+-- 문1) 사번   이름    부서  직급  근무년수  고객확보
+-- 조건 : 직급이 없으면 임시직, 전산부 자료는 제외
+CREATE OR REPLACE VIEW v_exam1 AS
+	SELECT distinct jikwonno 사번, jikwonname 이름, busername 부서, 
+		nvl(jikwonjik, '임시직') 직급, 
+		YEAR(NOW())-YEAR(jikwonibsail) 근무년수, 
+		case nvl(gogekname, 'a') when 'a' then 'X' ELSE 'O' END AS 고객확보
+	FROM jikwon 
+		LEFT OUTER JOIN buser ON jikwon.busernum=buser.buserno
+		LEFT OUTER JOIN gogek ON jikwon.jikwonno=gogek.gogekdamsano
+	WHERE busername <> '전산부' OR busername IS NULL;
+SELECT * FROM v_exam1;
+
+-- 문2) 부서명   인원수
+-- 조건 : 직원수가 가장 많은 부서 출력	
+CREATE OR REPLACE VIEW v_exam2 AS
+	SELECT busername 부서명, COUNT(*) 인원수
+	FROM jikwon	LEFT OUTER JOIN buser ON jikwon.busernum=buser.buserno
+	GROUP BY busername
+	HAVING 인원수 = (SELECT MAX(cnt) FROM (SELECT COUNT(*) cnt
+		FROM jikwon LEFT OUTER JOIN buser ON jikwon.busernum=buser.buserno
+		GROUP BY busername) t);
+SELECT * FROM v_exam2;
+
+-- 문3) 가장 많은 직원이 입사한 요일에 입사한 직원 출력
+-- 직원명   요일     부서명   부서전화
+-- 한국인  수요일   전산부   222-2222
+create or replace view v_exam3 AS
+	SELECT jikwonname 직원명, 
+	case WEEKDAY(jikwonibsail)
+    when '0' then '월요일'
+    when '1' then '화요일'
+    when '2' then '수요일'
+    when '3' then '목요일'
+    when '4' then '금요일'
+    when '5' then '토요일'
+    when '6' then '일요일'
+    end as 요일,
+	busername 부서명,
+	busertel 부서전화
+	FROM jikwon 
+	LEFT OUTER JOIN buser ON jikwon.busernum=buser.buserno
+where WEEKDAY(jikwonibsail)=(
+		SELECT weekday_num FROM (
+			SELECT weekday(jikwonibsail) weekday_num, COUNT(*) cnt
+			FROM jikwon 
+			GROUP BY WEEKDAY(jikwonibsail)
+			ORDER BY COUNT(*) DESC LIMIT 1
+		) t
+);
+
+SELECT * FROM v_exam3;
