@@ -1019,9 +1019,47 @@ CREATE OR REPLACE VIEW v_exam2 AS
 		GROUP BY busername) t);
 SELECT * FROM v_exam2;
 
+CREATE OR REPLACE VIEW v_exam2 AS
+SELECT busername AS 부서명, COUNT(*) AS 인원수 FROM buser
+INNER JOIN jikwon ON buser.buserno=jikwon.busernum
+GROUP BY busername
+HAVING COUNT(*)=(SELECT COUNT(*) FROM jikwon 
+						GROUP BY busernum
+						ORDER BY COUNT(*) desc
+						LIMIT 1);
+
+CREATE OR REPLACE VIEW v_exam2 AS
+SELECT busername AS 부서명, COUNT(*) AS 인원수 FROM buser
+INNER JOIN jikwon ON buser.buserno=jikwon.busernum
+GROUP BY busername
+ORDER BY COUNT(*) desc LIMIT 1;
+SELECT * FROM v_exam2;
+
 -- 문3) 가장 많은 직원이 입사한 요일에 입사한 직원 출력
 -- 직원명   요일     부서명   부서전화
 -- 한국인  수요일   전산부   222-2222
+create or replace view v_exam3 AS
+	SELECT jikwonname 직원명, 
+	case WEEKDAY(jikwonibsail)
+    when '0' then '월요일'
+    when '1' then '화요일'
+    when '2' then '수요일'
+    when '3' then '목요일'
+    when '4' then '금요일'
+    when '5' then '토요일'
+    when '6' then '일요일'
+    end as 요일,
+	busername 부서명,
+	busertel 부서전화
+	FROM jikwon LEFT OUTER JOIN buser ON jikwon.busernum=buser.buserno
+	WHERE WEEKDAY(jikwonibsail) IN (select WEEKDAY(jikwonibsail)
+										from jikwon
+										GROUP BY WEEKDAY(jikwonibsail)
+										HAVING COUNT(*)=(SELECT MAX(cnt) 
+										FROM (SELECT COUNT(*) cnt
+												FROM jikwon 
+												GROUP BY WEEKDAY(jikwonibsail)) t));
+
 create or replace view v_exam3 AS
 	SELECT jikwonname 직원명, 
 	case WEEKDAY(jikwonibsail)
@@ -1045,5 +1083,15 @@ where WEEKDAY(jikwonibsail)=(
 			ORDER BY COUNT(*) DESC LIMIT 1
 		) t
 );
+
+create or replace view v_exam3 AS
+SELECT jikwonname 직원명, DATE_FORMAT(jikwonibsail, '%W') 요일, busername 부서명, busertel 부서전화
+FROM jikwon LEFT OUTER JOIN buser ON jikwon.busernum=buser.buserno
+WHERE DATE_FORMAT(jikwonibsail, '%W')=(SELECT DATE_FORMAT(jikwonibsail, '%W') 
+				FROM jikwon 
+				GROUP BY DATE_FORMAT(jikwonibsail, '%W')
+				HAVING COUNT(*) = (SELECT COUNT(*) FROM jikwon
+										GROUP BY DATE_FORMAT(jikwonibsail, '%W')
+										ORDER BY COUNT(*) DESC LIMIT 1));
 
 SELECT * FROM v_exam3;
