@@ -1,0 +1,7 @@
+# client
+from socket import *
+
+clientsock = socket(AF_INET, SOCK_STREAM)
+clientsock.connect(('127.0.0.1', 8888)) # 능동적으로 연결 시도
+clientsock.send('안녕 반가워'.encode('utf_8', errors='strict'))
+clientsock.close()
