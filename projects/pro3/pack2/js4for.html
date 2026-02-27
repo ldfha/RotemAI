@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    반복문 for(초기값;조건;증가값)<br>
+    <script>
+        
+        //for(let a = 1; a <= 5; a=a+1){
+        //for(let a = 1; a <= 5; a+=1){
+        let a = 1;
+        for(a; a <= 5; a++){    // ++a  조건이 참인 동안만 수행
+            document.write("a 값은 " + a + "<br>");
+        }
+        document.write("for 블럭 수행 후 a 값은 " + a + "<br>");
+    </script>
+
+    <hr>
+    다중 for<br>
+    <script>
+        for(let i = 1; i <= 3; i++){
+            document.write("i 값은 => " + i + "&nbsp;&nbsp;");
+            for (let j = 1; j<= 4; j++){
+                document.write("j : " + j + "&nbsp;&nbsp;");
+            }
+            document.write("<br>");
+        }
+
+        document.write("<br>1~10 =까지의 정수 합은?<br>");
+        let hap = 0;
+        for(let su=1; su<=10; su++){
+            hap += su;
+        }
+        document.write(hap);
+
+        document.write("<br>1 ~ 100 까지의 정수 중 2의 배수이나 5의 배수가 아닌 수의 합 출력<br>");
+        let hap2 = 0;
+        for(let s=1; s<=100; s++){
+            // ==는 느슨한 비교
+            // === 는 어쩌구
+            if(s % 2 == 0 && s % 5 != 0){
+                hap2 += s;
+            }
+        }
+        document.write(hap2);
+    </script>
+
+    <hr>
+    2 ~ 9 구구단 출력 - table에 출력<br>
+    <script>
+        document.write("<table>");
+        for(let dan=2; dan<=9; dan++){
+            document.write("<tr>");
+            for(let su=1; su<=9; su++){
+                // document.write("<td>"+dan+"*"+su+"="+dan*su+"</td>");
+                document.write(`<td>${dan}*${su}=${dan*su}</td>`);  // 템플릿 문자열
+            }
+            document.write("</tr>");
+        }
+        
+        document.write("</table>");
+    </script>
+
+</body>
+</html>
