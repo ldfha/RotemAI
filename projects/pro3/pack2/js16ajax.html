@@ -17,7 +17,7 @@
             let nai = frm.age.value;
             console.log(irum, nai);
             xhr = new XMLHttpRequest();     // 서버와 Ajax 통신용 클래스
-            let fname = "js.py?irum="+irum+"&nai="+nai;
+            let fname = "js16.py?irum="+irum+"&nai="+nai;
             xhr.open("GET", fname, true);   // true면 비동기 방식, false면 동기 방식
             xhr.onreadystatechange = function() {
                 if (xhr.readyState === 4 && xhr.status === 200){
@@ -28,10 +28,23 @@
 
         }
         function postFunc() {
+            let irum = frm.name.value;
+            let nai = frm.age.value;
+            xhr = new XMLHttpRequest();     // 서버와 Ajax 통신용 클래스
+            let fname = "js16.py";
+            xhr.open("POST", fname, true);   // true면 비동기 방식, false면 동기 방식
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200){
+                    process1();
+                }
+            }
+            xhr.setRequestHeader("Content-Type","application/x-www-form-urlencoded")
+            xhr.send("irum="+irum+"&nai="+nai); // body 영역에 포함되어 전송(대용량)
+
 
         }
         function process1() {
-            alert(xhr.resposeText);
+            alert(xhr.responseText);
         }
     </script>
 </head>

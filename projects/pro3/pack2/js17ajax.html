@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script>
+        window.onload = () => {
+            document.querySelector("#btn1").onclick = funcJson; 
+            document.querySelector("#btn2").onclick = funcCsv; 
+        }
+
+        function funcJson() {
+            let xhr = new XMLHttpRequest();
+            let fname = "sangpum.json";
+            xhr.open("GET", fname, true);   // true면 비동기 방식, false면 동기 방식
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200){
+                    let data = JSON.parse(xhr.responseText);    // JSON 모양의 문자열을 JSON 객체로 파싱
+                    
+                    let output = "JSON 반환 결과<br>"
+                    output += "코드&nbsp;&nbsp;&nbsp;품명<br>";
+                    
+                    for(let i=0; i < data.length; i++){
+                        output += data[i].code + "&nbsp;&nbsp;&nbsp;" + data[i].sang + "<br>";
+                    }
+
+                    document.querySelector("#result").innerHTML = output;
+                } else{
+                    document.querySelector("#result").innerHTML = "로딩 실패 : " + xhr.status;
+                }
+            }
+            xhr.send()
+        }
+        
+        function funcCsv() {
+            let xhr = new XMLHttpRequest();
+            let fname = "sangpum.csv";
+            xhr.open("GET", fname, true);   // true면 비동기 방식, false면 동기 방식
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4 && xhr.status === 200){
+                    let text = xhr.responseText.trim()
+                    let lines = text.split("\n");
+
+                    let output = "CSV 반환 결과<br>"
+                    output += "코드&nbsp;&nbsp;&nbsp;품명<br>";
+                    
+                    for(let i=0; i < lines.length; i++){
+                        if(lines[i] !== ""){
+                            let parts = lines[i].split(",");
+                            let code = parts[0].trim();
+                            let sang = parts[1].trim();
+                            output += code + "&nbsp;&nbsp;&nbsp;" + sang + "<br>";
+                        }
+                    }
+                    document.querySelector("#result").innerHTML = output;
+                } else{
+                    document.querySelector("#result").innerHTML = "로딩 실패 : " + xhr.status;
+                }
+            }
+            xhr.send()
+        }
+
+    </script>
+</head>
+<body>
+    <h3>전통 Ajax 처리</h3>
+    <button id="btn1">JSON 불러오기</button>
+    <button id="btn2">CVS 불러오기</button>
+    <hr>
+    <div id="result"></div>
+</body>
+</html>
