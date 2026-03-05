@@ -6,17 +6,22 @@ app = Flask(__name__);
 def index():
     return render_template("index.html")
 
-@app.route('/hello')
-def hello():
-    name = "길동아"
-    addr = "강남구 테헤란로"
-    return render_template("hello.html", name=name, juso=addr)
-    # 페이지 소스보기 하면 완성된 문장이 넘겨져있음
-    # 서버에서 먼저 렌더링을 하고 html을 return한다.
+@app.route('/condition')
+def condition():
+    score = 85
+    return render_template("condition.html", score=score)
 
-@app.route('/world')
-def world():
-    return render_template("world.html")
+@app.route('/loop')
+def loop():
+    users = ["손오공", "사오정", "저팔계"]
+    return render_template("loop.html", users=users)
+
+@app.route('/filter')
+def filter_ex():
+    message = "hello flask jinja2"
+    price = 12345
+    return render_template("filter.html", message=message, price=price)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
