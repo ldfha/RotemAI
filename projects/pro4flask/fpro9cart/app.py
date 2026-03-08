@@ -21,7 +21,8 @@ def product_list():
 @app.route("/cart")
 def show_cart():
     cart = session.get("cart", {})
-    return render_template("cart.html", cart=cart)
+    total = sum(info["price"] * info["qty"] for info in cart.values())
+    return render_template("cart.html", cart=cart, total=total)
 
 @app.route("/add/<int:product_id>")
 def add_to_cart(product_id):
@@ -48,6 +49,24 @@ def add_to_cart(product_id):
     session.permanent = True    # 5분 만료 적용
 
     return redirect(url_for("show_cart"))   # 카트에 담은 후 장바구니 보기로 이동
+
+# 장바구니 부분 삭제
+@app.route('/remove/<item_name>')
+def remove_to_cart(item_name):
+    cart = session.get("cart")  # 수정을 위해 세션을 읽고
+
+    if item_name in cart:
+        del cart[item_name]     # 상품을 지우고
+
+    session["cart"] = cart      # 지워지고 남은 상품들만 다시 세션에 저장
+    
+    return redirect(url_for("show_cart"))
+
+# 장바구니 전체 비우기
+@app.route('/clear')
+def clear_cart():
+    session.pop("cart", None)   # 세션에 여러 개의 키 중 cart라는 key를 삭제
+    return redirect(url_for("show_cart"))
 
 if __name__ == '__main__':
     app.run(debug=True)
