@@ -11,9 +11,11 @@ print(a)
 a.columns = ['No1', 'No2', 'No3', 'No4']
 print(a)
 
-print(np.mean(a, axis=0))
-
-
+# print(np.mean(a, axis=0))
+print(a.mean(axis=0))
+print()
+print('---'*10)
+print()
 # pandas 문제 2)
 #    numbers
 # a  10
@@ -31,14 +33,17 @@ print(a.loc['c', :])
 # c) a, d row들의 값을 가져오시오.
 print(a.loc[['a', 'd'],:])
 # d) numbers의 합을 구하시오.
-print(a.sum())
+# print(a.sum())
+print(a.numbers.sum())
 # e) numbers의 값들을 각각 제곱하시오. 아래 결과가 나와야 함.
 #    numbers
 # a  100
 # b  400
 # c  900
 # d  1600
-print(a ** 2)
+# print(a ** 2)
+# print(a.numbers ** 2)
+print(a['numbers'] ** 2)
 # f) floats 라는 이름의 칼럼을 추가하시오. 값은 1.5, 2.5, 3.5, 4.5 
 # 아래 결과가 나와야 함.
 #    numbers  floats
@@ -60,9 +65,9 @@ a['names'] = names
 print(a)
 print()
 print('---'*10)
+print()
 
 # pandas 문제 3)
-
 # 1) 5 x 3 형태의 랜덤 정수형 DataFrame을 생성하시오. (범위: 1 이상 20 이하, 난수)
 # 2) 생성된 DataFrame의 컬럼 이름을 A, B, C로 설정하고, 행 인덱스를 r1, r2, r3, r4, r5로 설정하시오.
 # 3) A 컬럼의 값이 10보다 큰 행만 출력하시오.
@@ -78,7 +83,8 @@ df.columns=list('ABC')
 df.index=['r1','r2','r3','r4','r5']
 print(df)
 print(df[df['A'] > 10])
-df['D'] = df[['A', 'B']].sum(axis=1)
+# df['D'] = df[['A', 'B']].sum(axis=1)
+df['D'] = df['A'] + df['B']
 print(df)
 df.drop('r3', inplace=True)
 print(df)
