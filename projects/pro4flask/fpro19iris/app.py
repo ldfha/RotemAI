@@ -36,8 +36,14 @@ def showdata():
     plt.savefig(img_path, dpi=130)  # dpi : 해상도
     plt.close()
 
+    irishtml = df.to_html(
+        classes="table table-striped tabel-sm", index=False
+    )
 
-    return render_template("showdata.html")
+
+    return render_template("showdata.html",
+                           table=irishtml,
+                           img_path='images/fpro19.png')
 
 if __name__=='__main__':
     app.run(debug=True)
