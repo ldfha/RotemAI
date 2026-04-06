@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2>근무년수 → 예상 연봉(LinearRegression)</h2>
+    <form id="payForm" method="get">
+        <label for="year">근무년수 : </label>
+        <input type="number" id="year" name="year">
+        <button type="submit">확인</button>
+    </form>
+
+    <div id="errorMsg"></div>
+
+    <div id="resultArea" class="result-box" style="display:none;">
+        <p>예상연봉액 : <b id="result"></b></p>
+        <p>설명력(R²) : <b id="rsquared"></b>%</p>
+        <p>회귀식 : pay = <span id="slope"></span> * years + <span id="intercept"></span></p>
+    </div>
+
+    <h3>직급별 연봉평균</h3>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>직급</th>
+                <th>평균 연봉</th>
+            </tr>
+        </thead>
+        <tbody id="avgTableBody">
+        </tbody>
+    </table>
+
+    <script>
+        const form = document.getElementById("payForm");
+        const errorMsg = document.getElementById("errorMsg");
+        const resultArea = document.getElementById("resultArea");
+
+        form.addEventListener("submit", async function(e) {
+            e.preventDefault();
+
+            const year = document.getElementById("year").value.trim();
+            errorMsg.textContent = "";
+            resultArea.style.display = "none";
+
+            try {
+                const response = await fetch(`/dbshow?year=${encodeURIComponent(year)}`);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorMsg.textContent = data.error || "오류가 발생했습니다.";
+                    return;
+                }
+
+                document.getElementById("result").textContent = data.result;
+                document.getElementById("rsquared").textContent = data.rsquared;
+                document.getElementById("slope").textContent = data.slope;
+                document.getElementById("intercept").textContent = data.intercept;
+
+                const tbody = document.getElementById("avgTableBody");
+                tbody.innerHTML = "";
+
+                data.avg_df.forEach(row => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${row.직급}</td>
+                        <td>${Number(row.연봉).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                resultArea.style.display = "block";
+            } catch (err) {
+                errorMsg.textContent = "서버 통신 중 오류가 발생했습니다.";
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>
