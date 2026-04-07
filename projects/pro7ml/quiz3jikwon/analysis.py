@@ -9,10 +9,10 @@ def analysis_func(rdata:list[dict]):
     # print(df)
     df = df.dropna(subset = ["연봉", "직급", "근무년수"]) 
     lm = LinearRegression().fit(df[['근무년수']], df['연봉'])
-    rsquared = r2_score(df['연봉'], df[['근무년수']])
-    intercept = lm.intercept_
-    slope = lm.coef_
-    return df, lm, rsquared, intercept, slope[0]
+    rsquared = np.round(r2_score(df['연봉'], lm.predict(df[['근무년수']])) * 100, 2)
+    intercept = np.round(lm.intercept_, 4)
+    slope = np.round(lm.coef_[0], 4)
+    return df, lm, rsquared, intercept, slope
 
 def predict_func(year, model):
     pred = np.round(model.predict([[year]]).flatten(), 2)
