@@ -1,3 +1,6 @@
+# RandomForest는 분류, 회귀 모두 가능. sklearn 모듈은 대개 그러하다.
+# 캘리포니아 주택 가격 데이터로 회귀분석
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,10 +23,7 @@ df = housing.frame  # data + target 합친 전체 DataFrame
 print(df.head(3))
 print(df.info())
 
-# MedHouseVal(중위 주택 가격) 제외한 8개 컬럼 → feature
 x = df.drop('MedHouseVal', axis=1)
-
-# MedHouseVal → label (연속형 숫자 — 회귀 대상)
 y = df['MedHouseVal']
 
 x_train, x_test, y_train, y_test = train_test_split(
@@ -37,27 +37,21 @@ x_train, x_test, y_train, y_test = train_test_split(
 rfmodel = RandomForestRegressor(n_estimators=200, random_state=42)
 rfmodel.fit(x_train, y_train)
 
+# 예측 및 평가
 y_pred = rfmodel.predict(x_test)
-
 # MSE (Mean Squared Error) : 오차 제곱의 평균 → 낮을수록 좋음
 print(f'MSE : {mean_squared_error(y_test, y_pred):.3f}')    # 0.254
-
 # R2 (결정계수) : 0~1, 높을수록 좋음 (1이면 완벽)
 print(f'R2(결정계수) : {r2_score(y_test, y_pred):.3f}')      # 0.807
 
+# 변수 중요도 시각화
 importances = rfmodel.feature_importances_
-
 # np.argsort : 오름차순 정렬했을 때의 인덱스 반환
 # [::-1]     : 뒤집기 → 내림차순 (중요도 높은 순)
 indices = np.argsort(importances)[::-1]
 
 plt.figure(figsize=(8, 5))
-
-# bar : 수직 막대 그래프 (이전 실습의 barh 수평과 다름)
-# importances[indices] : 중요도를 내림차순으로 정렬
 plt.bar(range(x.shape[1]), importances[indices], align='center')
-
-# x축 눈금을 컬럼명으로 교체 (내림차순 정렬된 순서로)
 plt.xticks(range(x.shape[1]), x.columns[indices], rotation=45)
 plt.xlabel('feature name')
 plt.ylabel('feature importances')
@@ -99,7 +93,10 @@ print(ranking)
 # 6  Population    0.032089
 # 7   AveBedrms    0.029859
 
+# 파라미터 튜닝
 from sklearn.model_selection import RandomizedSearchCV
+# GridSearchCV와 달리 사용자가 지정한 범위, 분포에서 임의로 일부 혼합만 샘플링해 탐색
+# 연속적 값 범위도 가능. 무작위이기 때문에 최적 조합을 못 찾을 수도 있다.
 
 # 탐색할 파라미터 범위 정의
 param_dist = {

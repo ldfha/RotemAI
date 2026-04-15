@@ -1,10 +1,13 @@
+# XGBoost : Boosting 알고리즘을 구현한 분류/예측 모델
+# Boosting은 약한 분류기에 대해 샘플의 일부를 보완해하며 순차적으로 학습해 강한 분류기를 만듦
+
+# breast_cancer dataset
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report
-
 # pip install xgboost lightgbm
 import xgboost as xgb
 from lightgbm import LGBMClassifier  # xgboost보다 성능 우수하나 자료가 적으면 과적합 발생
@@ -29,6 +32,7 @@ x_train, x_test, y_train, y_test = train_test_split(
 )
 print(x_train.shape, x_test.shape)  # (455, 30) (114, 30)
 
+# 모델 1
 xgb_clf = xgb.XGBClassifier(
     booster='gbtree',      # 'gbtree':트리 기반, 'gblinear':선형 모델
     max_depth=6,           # 개별 결정트리 최대 깊이
@@ -38,6 +42,7 @@ xgb_clf = xgb.XGBClassifier(
 )
 xgb_clf.fit(x_train, y_train)
 
+# 모델 2
 lgb_clf = LGBMClassifier(
     n_estimators=200,
     random_state=42,
@@ -45,28 +50,32 @@ lgb_clf = LGBMClassifier(
 )
 lgb_clf.fit(x_train, y_train)
 
+# 예측 / 평가
 pred_xgb = xgb_clf.predict(x_test)
 pred_lgb = lgb_clf.predict(x_test)
 
 print(f'XGBClassifier  acc : {accuracy_score(y_test, pred_xgb):.5f}')  # 0.96491
 print(f'LGBMClassifier acc : {accuracy_score(y_test, pred_lgb):.5f}')  # 0.99123
 
+print()
+# 피처 중요도 : gain 기준으로 통일
 # XGBoost : get_booster().get_score()로 gain 값 추출
 booster = xgb_clf.get_booster()
 xgb_gain = pd.Series(booster.get_score(importance_type='gain'))
-
 # LightGBM : booster_.feature_importance()로 gain 값 추출
 lgb_gain = pd.Series(
     lgb_clf.booster_.feature_importance(importance_type='gain'),
     index=x_train.columns  # 컬럼명 인덱스로 설정
 )
+# print(xgb_gain)
+# print(lgb_gain)
 
 # 각 피처의 중요도를 전체 합 대비 비율(%)로 변환
 # 0으로 나누기 방지 : xgb_gain.sum() != 0 조건 추가
 xgb_gain_pct = 100 * xgb_gain / (xgb_gain.sum() if xgb_gain.sum() != 0 else 1)
 lgb_gain_pct = 100 * lgb_gain / (lgb_gain.sum() if lgb_gain.sum() != 0 else 1)
 
-# XGBoost가 사용하지 않은 피처 → 0으로 채움 (두 모델 컬럼 통일)
+# 사용하지 않은 피처 → 0으로 채움 (두 모델 컬럼 통일)
 xgb_gain_pct = xgb_gain_pct.reindex(x_train.columns).fillna(0)
 lgb_gain_pct = lgb_gain_pct.reindex(x_train.columns).fillna(0)
 
@@ -78,6 +87,7 @@ comp_df = pd.DataFrame({
 
 print(comp_df.head(10))  # 중요 피처(변수) top-10
 
+# 시각화
 topk = 5                    # 상위 5개 피처만 시각화
 top = comp_df.head(topk)[::-1]  # 내림차순 → 뒤집기 (barh는 아래서 위로 출력)
 
