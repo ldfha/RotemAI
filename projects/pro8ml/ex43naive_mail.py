@@ -1,0 +1,52 @@
+# 스팸 멩밀 분류기 - spam 자료를 파일에서 읽기
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.naive_bayes import MultinomialNB
+import pandas as pd
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+import koreanize_matplotlib
+
+df = pd.read_csv("https://raw.githubusercontent.com/pykwon/python/refs/heads/master/testdata_utf8/mydata.csv")
+print(df.head(3))
+df['label'] = df['label'].str.strip().str.lower()
+texts = df['text'].tolist()
+labels = df['label'].tolist()
+print(texts[:3])
+print(labels[:3])
+
+x_train, x_test, y_train, y_test = train_test_split(texts, labels, test_size=0.25, stratify=labels, random_state=42)
+
+# 벡터화
+vectorizer = CountVectorizer()
+x_train_vec = vectorizer.fit_transform(x_train)
+x_test_vec = vectorizer.transform(x_test)
+
+model = MultinomialNB()
+model.fit(x_train_vec, y_train)
+
+y_pred = model.predict(x_test_vec)
+
+acc = accuracy_score(y_test, y_pred)
+print('분류 정확도 :', acc)     # 0.8
+
+# Confusion matrix
+cm = confusion_matrix(y_test, y_pred, labels=['ham', 'spam'])
+print(cm)
+
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=['ham', 'spam'])
+disp.plot(cmap='Blues')
+plt.title('Confusion matrix (혼동 행렬)')
+plt.show()
+
+# 사용자 입력 메일 내용 분류
+while True:
+    userInput = input('이메일 내용 입력 (종료는 q):')
+    if userInput.lower() == 'q':
+        break
+    x_new = vectorizer.transform([userInput])
+    prob = model.predict_proba(x_new)[0]
+    spam_prob = prob[model.classes_.tolist().index('spam')]
+
+    result = '스펨이에요' if spam_prob >= 0.7 else '정상 메일입니다'
+    print(f"스팸 확률은 {spam_prob:.2f} -> {result}")
