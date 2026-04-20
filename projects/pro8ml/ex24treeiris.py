@@ -1,4 +1,4 @@
-# LogisticRegression - 다향분류 - iris dataset
+# DecisionTree - 다항분류(softmax 함수 사용) - Iris dataset
 import pandas as pd
 import numpy as np
 from sklearn import datasets
@@ -54,16 +54,16 @@ print(f'총 갯수:{len(y_test)}, 오류수:{(y_test != y_pred).sum()}')
 # test data
 
 print('분류 정확도 확인 1')
-print(f'{accuracy_score(y_test, y_pred)}')  # 0.97777
+print(f'{accuracy_score(y_test, y_pred)}')  # 0.9555555
 
 print('분류 정확도 확인 2')
 con_mat = pd.crosstab(y_test, y_pred, rownames=['예측치'], colnames=['관측치'])
 print(con_mat)
-print((con_mat[0][0] + con_mat[1][1] + con_mat[2][2]) / len(y_test))    # 0.97777
+print((con_mat[0][0] + con_mat[1][1] + con_mat[2][2]) / len(y_test))    # 0.9555555
 
 print('분류 정확도 확인 3')
-print('test score :', model.score(x_test, y_test))      # 0.977777
-print('train score :', model.score(x_train, y_train))   # 0.971428
+print('test score :', model.score(x_test, y_test))      # 0.9555555
+print('train score :', model.score(x_train, y_train))   # 0.990476
 # test score와 train score의 차이가 크다면 과적합(overfitting) 의심
 
 # 학습 후 검증된 모델 저장 후 읽기
