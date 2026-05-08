@@ -31,7 +31,7 @@ print(x_train.shape, x_test.shape, y_train.shape, y_test.shape)
 # (105, 2) (45, 2) (105,) (45,)
 print(x_train[:3], ' ', x_test[:3], ' ', y_train[:3], ' ', y_test[:3])
 
-# train, test = train_test_split(data2, test_size=0.3, random_state=0)
+# train, test = (data2, test_size=0.3, random_state=0)
 # print(train.shape, test.shape)
 # print(train.head(3))
 # print(test.head(3))
